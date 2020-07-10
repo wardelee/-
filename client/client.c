@@ -121,24 +121,32 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    //char buff[512] = {0};
+    //char buff[512] = {0}4-;
     //sprintf(buff, "芜湖, 上电视!");
     //send(sockfd, buff, strlen(buff), 0);
     //bzero(buff, sizeof(buff));
     //recv(sockfd, buff, sizeof(buff), 0);
     //DBG(RED"Server Info"NONE" : %s\n", buff);
+
+    pthread_t recv_t;
+    pthread_create(&recv_t, NULL, do_recv, NULL);
+
     signal(SIGINT, logout);
+    struct ChatMsg msg;
     while (1) {
-        struct ChatMsg msg, rec;
-        pthread_t recv_t;
-        recv_msg(sockfd);
+        bzero(&msg, sizeof(msg));
         msg.type = CHAT_WALL;
         printf(RED"Please Input : \n"NONE);
         scanf("%[^\n]s", msg.msg);
-        strcpy(msg.name, request.name);
         getchar();
-        send(sockfd, (void *)&msg, sizeof(msg), 0);
-        bzero(&msg, sizeof(msg));
+        if (strlen(msg.msg)) {
+            if (msg.msg[0] == '@') {
+                msg.type = CHAT_MSG;
+            } else if (msg.msg[0] == '#') {
+                msg.type = CHAT_FUNC;
+            }
+            send(sockfd, (void *)&msg, sizeof(msg), 0);
+        }
     }
     return 0;
 }

@@ -7,8 +7,6 @@
 
 #ifndef _CLIENT_RECV_H
 #define _CLIENT_RECV_H
-pthread_t recv_t;
 extern int sockfd;
 void *do_recv(void *arg);
-void recv_msg(int fd);
 #endif

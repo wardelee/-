@@ -5,27 +5,28 @@
 	> Created Time: Fri 10 Jul 2020 03:17:15 PM CST
  ************************************************************************/
 
-#include <head.h>
+#include "head.h"
 
-pthread_t recv_t;
 extern int sockfd;
 
 void *do_recv(void *arg)
 {
-    struct ChatMsg msg;
-    bzero(&msg, sizeof(msg));
-    recv(sockfd, (void *)&msg, sizeof(msg), 0);
     while (1) {
-        if (strcmp(msg.msg, "Chat Room closed!") == 0) {
-            printf(L_RED"Server msg"NONE" : %s\n", msg.msg);
+        struct ChatMsg msg;
+        bzero(&msg, sizeof(msg));
+        int ret = recv(sockfd, (void *)&msg, sizeof(msg), 0);
+        /*if (ret != sizeof(msg)) {
+            continue;
+        }*/
+        if (msg.type & CHAT_WALL) {
+            printf("<"BLUE"%s"NONE"> : %s\n", msg.name, msg.msg);
+        } else if (msg.type & CHAT_MSG) {
+            printf("<"RED"%s"NONE"> : %s\n", msg.name, msg.msg);
+        } else if (msg.type & CHAT_SYS) {
+            printf("<"YELLOW"Server Info"NONE"> : %s\n", msg.msg);
+        } else if (msg.type & CHAT_FIN) {
+            printf("<"L_RED"Server Info"NONE"> : Server Down!\n");
             exit(1);
-        } else {
-            printf("<"YELLOW"%s"NONE"> ~ %s\n", msg.name, msg.msg);
         }
     }
-}
-
-void recv_msg(int fd)
-{
-    pthread_create(&recv_t, NULL, do_recv, NULL);
 }

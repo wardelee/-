@@ -10,6 +10,7 @@ extern int port;
 extern struct User *rteam;
 extern struct User *bteam;
 extern int repollfd, bepollfd;
+extern pthread_mutex_t bmutex, rmutex;
 
 int udp_connect(struct sockaddr_in *client) {
     int sockfd;
@@ -70,7 +71,7 @@ int udp_accept(int fd, struct User *user) {
     } else {
         DBG(GREEN"Info"NONE" : "RED"%s login on %s:%d   <%s>\n", request.name, inet_ntoa(client.sin_addr), ntohs(client.sin_port), request.msg);
     }
-
+    
     strcpy(user->name, request.name);
     user->team = request.team;
     new_fd = udp_connect(&client);
@@ -104,6 +105,13 @@ int find_sub(struct User *team)
 void add_to_sub_reactor(struct User *user)
 {
     struct User *team = (user->team ? bteam : rteam);
+    DBG(YELLOW"Main Thread : "NONE"Add to sub_reactor\n");
+    if (user->team) {
+        pthread_mutex_lock(&bmutex);
+    } else {
+        pthread_mutex_lock(&rmutex);
+    }
+
     int sub = find_sub(team);
     if (sub < 0) {
         fprintf(stderr, "Full Team!\n");
@@ -112,6 +120,12 @@ void add_to_sub_reactor(struct User *user)
     team[sub] = *user;
     team[sub].online = 1;
     team[sub].flag = 10;
+    if (user->team) {
+        pthread_mutex_unlock(&bmutex);
+    } else {
+        pthread_mutex_unlock(&rmutex);
+    }
+
     DBG(L_RED"sub = %d, name : %s\n", sub, team[sub].name);
     if (user->team) {
         add_event_ptr(bepollfd, team[sub].fd, EPOLLIN | EPOLLET, &team[sub]);
