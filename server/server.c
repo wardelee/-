@@ -8,6 +8,7 @@
  ************************************************************************/
 
 #include "head.h"
+
 char *conf = "./footballd.conf";
 struct Map court;
 struct Bpoint ball; //球的位置
@@ -32,8 +33,9 @@ int main(int argc, char **argv) {
     }
 
     //判断一配置文件合法性
-
-    if (!port) port = atoi(get_conf_value(conf, "PORT"));
+    if (!port) {
+        port = atoi(get_conf_value(conf, "PORT"));
+    }
     court.width = atoi(get_conf_value(conf, "COLS"));   
     court.height = atoi(get_conf_value(conf, "LINES"));
     
@@ -69,6 +71,9 @@ int main(int argc, char **argv) {
     struct task_queue redQueue;
     struct task_queue blueQueue;
 
+    task_queue_init(&redQueue, MAX, repollfd);
+    task_queue_init(&blueQueue, MAX, bepollfd);
+
     pthread_create(&red_t, NULL, sub_reactor, (void *)&redQueue);
     pthread_create(&blue_t, NULL, sub_reactor, (void *)&blueQueue);
     
@@ -86,7 +91,7 @@ int main(int argc, char **argv) {
     socklen_t len = sizeof(client);
 
     while (1) {
-        DBG(YELLOW"Main Reactor"NONE" : Waiting for clienti.\n");
+        DBG(YELLOW"Main Reactor"NONE" : Waiting for client...\n");
         int nfds = epoll_wait(epollfd, events, MAX * 2, -1); 
         if (nfds < 0) {
             perror("epoll_wait()");
@@ -98,13 +103,11 @@ int main(int argc, char **argv) {
             if (events[i].data.fd == listener) {
                 int new_fd = udp_accept(listener, &user);
                 if (new_fd > 0) {
-                //    add_to_sub_reactor(&user);
+                    add_to_sub_reactor(&user);
                 }
             }
         }
-
     }
-
 
     return 0;
 }

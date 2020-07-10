@@ -9,18 +9,31 @@
 
 int server_port = 0;
 char server_ip[20] = {0};
-int team = -1;
-char name[20] = {0};
-char log_msg[512] = {0};
 char *conf = "./football.conf";
 int sockfd = -1;
 
-int main(int argc, char **argv) {
+void logout(int signum)
+{
+    struct ChatMsg msg;
+    msg.type = CHAT_FIN;
+    send(sockfd, (void *)&msg, sizeof(msg), 0);
+    close(sockfd);
+    printf(GREEN"\nBye!\n"NONE);
+    exit(1);
+}
+
+int main(int argc, char **argv)
+{
     int opt;
+    struct LogRequest request;
+    struct LogResponse response;
+    bzero(&request, sizeof(request));
+    bzero(&response, sizeof(response));
+
     while ((opt = getopt(argc, argv, "h:p:t:m:n:")) != -1) {
         switch (opt) {
             case 't':
-                team = atoi(optarg);
+                request.team = atoi(optarg);
                 break;
             case 'h':
                 strcpy(server_ip, optarg);
@@ -29,10 +42,10 @@ int main(int argc, char **argv) {
                 server_port = atoi(optarg);
                 break;
             case 'm':
-                strcpy(log_msg, optarg);
+                strcpy(request.msg, optarg);
                 break;
             case 'n':
-                strcpy(name, optarg);
+                strcpy(request.name, optarg);
                 break;
             default:
                 fprintf(stderr, "Usage : %s [-hptmn]!\n", argv[0]);
@@ -41,15 +54,27 @@ int main(int argc, char **argv) {
     }
     
 
-    if (!server_port) server_port = atoi(get_conf_value(conf, "SERVERPORT"));
-    if (!team) team = atoi(get_conf_value(conf, "TEAM"));
-    if (!strlen(server_ip)) strcpy(server_ip, get_conf_value(conf, "SERVERIP"));
-    if (!strlen(name)) strcpy(name, get_conf_value(conf, "NAME"));
-    if (!strlen(log_msg)) strcpy(log_msg, get_conf_value(conf, "LOGMSG"));
+    if (!server_port) {
+        server_port = atoi(get_conf_value(conf, "SERVERPORT"));
+    }
+    if (!request.team) {
+        request.team = atoi(get_conf_value(conf, "TEAM"));
+    }
+    if (!strlen(server_ip)) {
+        strcpy(server_ip, get_conf_value(conf, "SERVERIP"));
+    }
+    if (!strlen(request.name)) {
+        strcpy(request.name, get_conf_value(conf, "NAME"));
+    }
+    if (!strlen(request.msg)) {
+        strcpy(request.msg, get_conf_value(conf, "LOGMSG"));
+    }
 
-
-    DBG("<"GREEN"Conf Show"NONE"> : server_ip = %s, port = %d, team = %s, name = %s\n%s",\
-        server_ip, server_port, team ? "BLUE": "RED", name, log_msg);
+    DBG(" <"RED"IP"NONE"> : %s\n",server_ip);
+    DBG("<"L_RED"PORT"NONE"> : %d\n", server_port);
+    DBG("<"BLUE"NAME"NONE"> : %s\n", request.name);
+    DBG("<"GREEN"TEAM"NONE"> : %s\n", request.team ? "BLUE" : "RED");
+    DBG("<"YELLOW"LOGMSG"NONE"> : %s\n", request.msg);
 
     struct sockaddr_in server;
     server.sin_family = AF_INET;
@@ -63,7 +88,56 @@ int main(int argc, char **argv) {
         exit(1);
     }
     
-    sendto(sockfd, log_msg, strlen(log_msg), 0, (struct sockaddr *)&server, len);
+    sendto(sockfd, (void *)&request, sizeof(request), 0, (struct sockaddr *)&server, len);
+    
+    fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(sockfd, &rfds);
+    struct timeval tv;
+    tv.tv_sec = 5;
+    tv.tv_usec = 0;
+
+    int ret_val;
+    if ((ret_val = select(sockfd + 1, &rfds, NULL, NULL, &tv)) < 0) {
+        perror("select()");
+        exit(1);
+    } else if (ret_val > 0) {
+        int ret = recvfrom(sockfd, (void *)&response, sizeof(response), 0, (struct sockaddr *)&server, &len);
+        if (ret != sizeof(response) || response.type == 1) {
+            DBG(RED"Error"NONE" : The Game Server refused your login.\n\tThis may be helpful: %s\n", response.msg);
+            exit(2);
+        }
+    } else {
+        DBG(RED"Error"NONE"The Game Server is out of service!\n");
+        exit(1);
+    }86
+    DBG(GREEN"Server"NONE" : %s\n", response.msg);
+
+    int retval;
+    if ((retval = connect(sockfd, (struct sockaddr *)&server, len)) < 0) {
+        perror("connect()");
+        exit(1);
+    }
+
+    //char buff[512] = {0};
+    //sprintf(buff, "芜湖, 上电视!");
+
+    //send(sockfd, buff, strlen(buff), 0);
+    //bzero(buff, sizeof(buff));
+    //recv(sockfd, buff, sizeof(buff), 0);
+    //DBG(RED"Server Info"NONE" : %s\n", buff);
+    signal(SIGINT, logout);
+    while (1) {
+        struct ChatMsg msg;
+        msg.type = CHAT_WALL;
+        printf(RED"Please Input : \n"NONE);
+        scanf("%[^\n]s", msg.msg);
+        getchar();
+        send(sockfd, (void *)&msg, sizeof(msg), 0);
+    }
+
+
+
 
     return 0;
 }
