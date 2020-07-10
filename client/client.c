@@ -17,8 +17,10 @@ void logout(int signum)
     struct ChatMsg msg;
     msg.type = CHAT_FIN;
     send(sockfd, (void *)&msg, sizeof(msg), 0);
+    //send logout msg to all clients in the chat room
+
     close(sockfd);
-    printf(GREEN"\nBye!\n"NONE);
+    printf(L_GREEN"\nLogout! Bye!\n"NONE);
     exit(1);
 }
 
@@ -121,23 +123,21 @@ int main(int argc, char **argv)
 
     //char buff[512] = {0};
     //sprintf(buff, "芜湖, 上电视!");
-
     //send(sockfd, buff, strlen(buff), 0);
     //bzero(buff, sizeof(buff));
     //recv(sockfd, buff, sizeof(buff), 0);
     //DBG(RED"Server Info"NONE" : %s\n", buff);
     signal(SIGINT, logout);
     while (1) {
-        struct ChatMsg msg;
+        struct ChatMsg msg, rec;
+        pthread_t recv_t;
+        recv_msg(sockfd);
         msg.type = CHAT_WALL;
         printf(RED"Please Input : \n"NONE);
         scanf("%[^\n]s", msg.msg);
+        strcpy(msg.name, request.name);
         getchar();
         send(sockfd, (void *)&msg, sizeof(msg), 0);
     }
-
-
-
-
     return 0;
 }

@@ -17,6 +17,7 @@ struct Score score;
 int repollfd, bepollfd;
 struct User *rteam, *bteam;
 int port = 0;
+struct ChatMsg msg;
 
 int main(int argc, char **argv) {
     int opt, listener, epollfd;
@@ -70,7 +71,6 @@ int main(int argc, char **argv) {
     
     struct task_queue redQueue;
     struct task_queue blueQueue;
-
     task_queue_init(&redQueue, MAX, repollfd);
     task_queue_init(&blueQueue, MAX, bepollfd);
 

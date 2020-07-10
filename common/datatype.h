@@ -102,9 +102,11 @@ struct FootBallMsg{
 #define CHAT_WALL 0x08 //公聊
 #define CHAT_MSG 0x10  //私聊
 #define CHAT_FUNC 0x20 //功能
+#define CHAT_SYS 0x40  //系统公告
 
 struct ChatMsg {
     int type;
+    char name[20];
     char msg[1024];
 };
 

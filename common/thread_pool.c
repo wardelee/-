@@ -8,11 +8,51 @@
 #include "head.h"
 
 extern int repollfd, bepollfd;
+extern struct User *rteam, *bteam;
+extern struct ChatMsg msg;
+
+void log_out(int signum)
+{
+    struct ChatMsg msg;
+    msg.type = CHAT_FIN;
+    sprintf(msg.msg, "Chat Room closed!");
+    for (int i = 0; i < MAX; i++) {
+        if (rteam[i].online) {
+            send(rteam[i].fd, (void *)&msg, sizeof(msg), 0);
+        }
+    }
+    for (int i = 0; i < MAX; i++) {
+        if (bteam[i].online) {
+            send(bteam[i].fd, (void *)&msg, sizeof(msg), 0);
+        }
+    }
+    printf(L_GREEN"\nBye!\n");
+    exit(1);
+}
+
+void send_all(struct ChatMsg *msg)
+{
+    for (int i = 0; i < MAX; i++) {
+        if (rteam[i].online) {
+            send(rteam[i].fd, (void *)&msg, sizeof(msg), 0);
+        }
+    }
+    for (int i = 0; i < MAX; i++) {
+        if (bteam[i].online) {
+            send(bteam[i].fd, (void *)&msg, sizeof(msg), 0);
+        }
+    }
+}
 
 void do_work(struct User *user)
 {
-    struct ChatMsg msg;
+    struct ChatMsg sed;
+    bzero(&sed, sizeof(sed));
+    bzero(&msg, sizeof(msg));
+    signal(SIGINT, log_out);
     recv(user->fd, (void *)&msg, sizeof(msg), 0);
+    strcpy(msg.name, user->name);
+    send_all(&msg);
     if (msg.type & CHAT_WALL) {
         printf("<%s> ~ %s\n", user->name, msg.msg);
     } else if (msg.type & CHAT_MSG) {
@@ -24,6 +64,7 @@ void do_work(struct User *user)
         printf(GREEN"Server Info"NONE" : %s Logout!\n", user->name);
         close(user->fd);
     }
+    bzero(&msg, sizeof(msg));
 }
 
 void task_queue_init(struct task_queue *taskQueue, int sum, int epollfd) {

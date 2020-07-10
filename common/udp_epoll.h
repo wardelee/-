@@ -19,5 +19,6 @@ void add_event_ptr(int epollfd, int fd, int events, struct User *user);
 int udp_accept(int fd, struct User *user);
 int udp_connect(struct sockaddr_in *client);
 int check_online(struct LogRequest *request);
+void log_out(int signum);
 
 #endif

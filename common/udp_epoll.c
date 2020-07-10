@@ -114,8 +114,8 @@ void add_to_sub_reactor(struct User *user)
     team[sub].flag = 10;
     DBG(L_RED"sub = %d, name : %s\n", sub, team[sub].name);
     if (user->team) {
-        add_event_ptr(bepollfd, bteam[sub].fd, EPOLLIN | EPOLLET, &bteam[sub]);
+        add_event_ptr(bepollfd, team[sub].fd, EPOLLIN | EPOLLET, &team[sub]);
     } else {
-        add_event_ptr(repollfd, rteam[sub].fd, EPOLLIN | EPOLLET, &rteam[sub]);
+        add_event_ptr(repollfd, team[sub].fd, EPOLLIN | EPOLLET, &team[sub]);
     }
 }
