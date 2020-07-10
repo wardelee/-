@@ -138,6 +138,7 @@ int main(int argc, char **argv)
         strcpy(msg.name, request.name);
         getchar();
         send(sockfd, (void *)&msg, sizeof(msg), 0);
+        bzero(&msg, sizeof(msg));
     }
     return 0;
 }

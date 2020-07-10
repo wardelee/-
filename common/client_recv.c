@@ -15,11 +15,13 @@ void *do_recv(void *arg)
     struct ChatMsg msg;
     bzero(&msg, sizeof(msg));
     recv(sockfd, (void *)&msg, sizeof(msg), 0);
-    if (strcmp(msg.msg, "Chat Room closed!") == 0) {
-        printf(L_RED"Server msg"NONE" : %s\n", msg.msg);
-        exit(1);
-    } else {
-        printf("<"YELLOW"%s"NONE"> ~ %s\n", msg.name, msg.msg);
+    while (1) {
+        if (strcmp(msg.msg, "Chat Room closed!") == 0) {
+            printf(L_RED"Server msg"NONE" : %s\n", msg.msg);
+            exit(1);
+        } else {
+            printf("<"YELLOW"%s"NONE"> ~ %s\n", msg.name, msg.msg);
+        }
     }
 }
 
