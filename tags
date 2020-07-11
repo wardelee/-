@@ -73,6 +73,7 @@ ball	server/server.c	/^struct Bpoint ball; \/\/球的位置$/;"	v	typeref:struct
 ball_status	server/server.c	/^struct BallStatus ball_status; \/\/球的状态$/;"	v	typeref:struct:BallStatus
 bepollfd	server/server.c	/^int repollfd, bepollfd;$/;"	v
 blue	common/datatype.h	/^    int blue;$/;"	m	struct:Score
+bmutex	server/server.c	/^pthread_mutex_t bmutex = PTHREAD_MUTEX_INITIALIZER;$/;"	v
 bteam	server/server.c	/^struct User *rteam, *bteam;$/;"	v	typeref:struct:
 check_online	common/udp_epoll.c	/^int check_online(struct LogRequest *request)$/;"	f
 cond	common/thread_pool.h	/^    pthread_cond_t cond;$/;"	m	struct:task_queue
@@ -114,15 +115,15 @@ name	common/datatype.h	/^    char name[20];$/;"	m	struct:FootBallMsg
 name	common/datatype.h	/^    char name[20];$/;"	m	struct:LogRequest
 name	common/datatype.h	/^    char name[20];$/;"	m	struct:User
 online	common/datatype.h	/^    int online;\/\/ 1 在线 0 不在线$/;"	m	struct:User
+onlinenum	common/thread_pool.c	/^int onlinenum()$/;"	f
 port	server/server.c	/^int port = 0;$/;"	v
-recv_msg	common/client_recv.c	/^void recv_msg(int fd)$/;"	f
-recv_t	common/client_recv.c	/^pthread_t recv_t;$/;"	v
-recv_t	common/client_recv.h	/^pthread_t recv_t;$/;"	v
 red	common/datatype.h	/^    int red;$/;"	m	struct:Score
 repollfd	server/server.c	/^int repollfd, bepollfd;$/;"	v
+rmutex	server/server.c	/^pthread_mutex_t rmutex = PTHREAD_MUTEX_INITIALIZER;$/;"	v
 rteam	server/server.c	/^struct User *rteam, *bteam;$/;"	v	typeref:struct:User
 score	server/server.c	/^struct Score score;$/;"	v	typeref:struct:Score
 send_all	common/thread_pool.c	/^void send_all(struct ChatMsg *msg)$/;"	f
+send_to	common/thread_pool.c	/^void send_to(char *to, struct ChatMsg *msg, int fd)$/;"	f
 server_ip	client/client.c	/^char server_ip[20] = {0};$/;"	v
 server_port	client/client.c	/^int server_port = 0;$/;"	v
 size	common/datatype.h	/^    int size;$/;"	m	struct:FootBallMsg

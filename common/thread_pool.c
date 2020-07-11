@@ -89,18 +89,29 @@ void do_work(struct User *user)
     signal(SIGINT, log_out);
     recv(user->fd, (void *)&msg, sizeof(msg), 0);
     if (msg.type & CHAT_WALL) {
-        if (!user->flag) {
+        if (strncmp(msg.msg, "  ", 2) != 0) {
             printf("<%s> ~ %s\n", user->name, msg.msg);
             r_msg.type = CHAT_SYS;
             user->flag = 1;
-            sprintf(r_msg.msg, "Your Friend <"RED"%s"NONE"> Login!\n", user->name);
+            sprintf(r_msg.msg, "Your Friend <"RED"%s"NONE"> Send a msg!\n", user->name);
             r_msg.type = CHAT_SYS;
             send_all(&r_msg);
             bzero(&r_msg, sizeof(r_msg));
+            r_msg.type = CHAT_WALL;
+            strcpy(msg.name, user->name);
+            send_all(&msg);
+        } else {
+            printf("<%s> ~ %s\n", "匿名用户", msg.msg);
+            r_msg.type = CHAT_SYS;
+            user->flag = 1;
+            sprintf(r_msg.msg, "Your Friend <"RED"%s"NONE"> Send a msg!\n", "匿名用户");
+            r_msg.type = CHAT_SYS;
+            send_all(&r_msg);
+            bzero(&r_msg, sizeof(r_msg));
+            msg.type = CHAT_WALL;
+            strcpy(msg.name, "匿名用户");
+            send_all(&msg);
         }
-        r_msg.type = CHAT_WALL;
-        strcpy(msg.name, user->name);
-        send_all(&msg);
     } else if (msg.type & CHAT_MSG) {
         char to[20] ={0};
         int i = 1;
@@ -120,13 +131,6 @@ void do_work(struct User *user)
             strncpy(to, msg.msg + 1, i - 1);
             send_to(to, &msg, user->fd);
         }
-        if (strcmp(msg.msg, "#1") == 0) {
-            int sum = onlinenum();
-            bzero(msg.msg, sizeof(msg.msg));
-            msg.type = CHAT_SYS;
-            sprintf(msg.msg, "在线人数：%d\n", sum);
-            send_all(&msg);
-        }
     } else if (msg.type & CHAT_FIN) {
         bzero(msg.msg, sizeof(msg.msg));
         msg.type = CHAT_SYS;
@@ -143,6 +147,12 @@ void do_work(struct User *user)
         del_event(epollfd, user->fd);
         printf(GREEN"Server Info"NONE" : %s Logout!\n", user->name);
         close(user->fd);
+    } else if (strcmp(msg.msg, "#1") == 0) {
+        int sum = onlinenum();
+        bzero(msg.msg, sizeof(msg.msg));
+        msg.type = CHAT_SYS;
+        sprintf(msg.msg, "在线人数：%d\n", sum);
+        send_all(&msg);
     }
     bzero(&msg, sizeof(msg));//
 }
@@ -158,7 +168,6 @@ void task_queue_init(struct task_queue *taskQueue, int sum, int epollfd) {
 
 void task_queue_push(struct task_queue *taskQueue, struct User *user) {
     pthread_mutex_lock(&taskQueue->mutex);
-    user->flag = 0;
     taskQueue->team[taskQueue->tail] = user;
     DBG(L_GREEN"Thread Pool"NONE" : Task push %s\n", user->name);
     if (++taskQueue->tail == taskQueue->sum) {
