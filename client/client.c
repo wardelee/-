@@ -11,14 +11,14 @@ int server_port = 0;
 char server_ip[20] = {0};
 char *conf = "./football.conf";
 int sockfd = -1;
+//WINDOW *message_win, *message_sub, *info_win, *info_sub, *input_win, *input_sub;
+//int msgnum = 0;
 
 void logout(int signum)
 {
     struct ChatMsg msg;
     msg.type = CHAT_FIN;
     send(sockfd, (void *)&msg, sizeof(msg), 0);
-    //send logout msg to all clients in the chat room
-
     close(sockfd);
     printf(L_GREEN"\nLogout! Bye!\n"NONE);
     exit(1);
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
     server.sin_addr.s_addr = inet_addr(server_ip);
 
     socklen_t len = sizeof(server);
-
+    
     if ((sockfd = socket_udp()) < 0) {
         perror("socket_udp()");
         exit(1);
@@ -92,6 +92,7 @@ int main(int argc, char **argv)
     
     sendto(sockfd, (void *)&request, sizeof(request), 0, (struct sockaddr *)&server, len);
     
+    struct ChatMsg tmp;
     fd_set rfds;
     FD_ZERO(&rfds);
     FD_SET(sockfd, &rfds);
@@ -112,7 +113,7 @@ int main(int argc, char **argv)
     } else {
         DBG(RED"Error"NONE"The Game Server is out of service!\n");
         exit(1);
-    }86
+    }
     DBG(GREEN"Server"NONE" : %s\n", response.msg);
 
     int retval;
@@ -132,6 +133,7 @@ int main(int argc, char **argv)
     pthread_create(&recv_t, NULL, do_recv, NULL);
 
     signal(SIGINT, logout);
+
     struct ChatMsg msg;
     while (1) {
         bzero(&msg, sizeof(msg));
@@ -150,3 +152,4 @@ int main(int argc, char **argv)
     }
     return 0;
 }
+

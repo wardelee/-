@@ -15,9 +15,9 @@ void *do_recv(void *arg)
         struct ChatMsg msg;
         bzero(&msg, sizeof(msg));
         int ret = recv(sockfd, (void *)&msg, sizeof(msg), 0);
-        /*if (ret != sizeof(msg)) {
+        if (ret != sizeof(msg)) {
             continue;
-        }*/
+        }
         if (msg.type & CHAT_WALL) {
             printf("<"BLUE"%s"NONE"> : %s\n", msg.name, msg.msg);
         } else if (msg.type & CHAT_MSG) {
